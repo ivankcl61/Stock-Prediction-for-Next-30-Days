@@ -1,0 +1,63 @@
+import nasdaqdatalink
+import pandas as pd
+import numpy as np
+##scikit-learn.model_selection
+from sklearn import linear_model
+from sklearn.svm import SVR
+from sklearn.model_selection import train_test_split
+
+# Set your Quandl API key
+nasdaqdatalink.ApiConfig.api_key = 'REPLACE WITH YOUR API KEY'
+
+df = nasdaqdatalink.get('WIKI/PRICES', qopts={'columns': ['ticker', 'date', 'close']},ticker = ['REPLACE WITH TICKER'], date={'gte': 'XXXX-XX-XX', 'lte': 'XXXX-XX-XX'})
+print(df.head())
+
+forecast_out = 30
+df['Predection'] = df['close'].shfit(-forecast_out)
+print(df.tail())
+
+X = np.array(df.drop(['Prediction'],1))
+X = X[:-forecast_out]
+print(X)
+
+### Create the dependt data set (g) ###
+# Convert the dataframe to a numpy array (All of the values including the NaN's)
+y = np.array(df['Prediction'])
+
+#Get all of the y values except the last 'n' rows
+y = y[:-forecast_out]
+print(y)
+
+#Split the data into 80% training and 20% testing
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+
+# Create and train the Support Vector Machine (Regressor)
+svr_rbf = SVR(kernel = 'rbf', C=1e3, gamma = 0.1)
+svr_rbf.fit(x_train, y_train)
+
+# Testing Model: Score returns the coefficient of determination R^2 of the prediction
+# The best possible score is 1.0
+svm_confidence=svr_rbf.score(x_test,y_test)
+print("svm confidence: ", svm_confidence)
+
+# Create and train the Linear Regression Model
+lr = LinearRegression()
+# Train the model
+lr.fit(x_train, y_train)
+
+# Testing Model: Score returns the coefficient of determination R^2 of the prediction
+# The best possible score is 1.0
+lr_confidence = lr.score(x_test, y_test)
+print("lr condifence:", lr_confidence)
+
+# Set x_forecast equal to the last 30 rows of the origianl data set from close column
+x_forecast = np.arrays(df.drop(['Prediction'],1))[-forecast_out:]
+print (x_forecast)
+
+#Print linear regression model predictions for the next "n" days
+lr_prediction = lr.predict(x_forecast)
+print(lr_prediction)
+
+#Print linear regression model predictions for the next "n" days
+svm_prediction = svr_rbf.predict(x_forecast)
+print(svm_prediction)
